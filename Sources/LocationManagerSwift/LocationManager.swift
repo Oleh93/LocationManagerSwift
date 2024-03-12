@@ -1,37 +1,40 @@
 import Foundation
 import CoreLocation
 
-public struct Location {
+@objc public class Location: NSObject {
     public var latitude: Double
     public var longitude: Double
+
+    init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
 }
 
-public protocol LocationManagerDelegate: AnyObject {
+@objc public protocol LocationManagerDelegate: AnyObject {
     func didUpdateLocations(_ manager: LocationManager, locations: [Location])
 }
 
 public class LocationManager: NSObject, CLLocationManagerDelegate {
-    private var locationManager: CLLocationManager
+    private var locationManager: CLLocationManager = CLLocationManager()
 
-    public weak var delegate: LocationManagerDelegate?
+    @objc public weak var delegate: LocationManagerDelegate?
 
-    public override init() {
-        self.locationManager = CLLocationManager()
-        super.init() // Ensure proper initialization of NSObject
+    override public init() {
+        super.init()
     }
 
-    public func start() {
+    @objc public func start() {
         locationManager.delegate = self
-
         let status = locationManager.authorizationStatus
         handleLocationAuthorizationStatus(status)
     }
 
-    public func startUpdatingLocation() {
+    @objc public func startUpdatingLocation() {
         locationManager.startUpdatingLocation()
     }
 
-    public func stopUpdatingLocation() {
+    @objc public func stopUpdatingLocation() {
         locationManager.stopUpdatingLocation()
     }
 
@@ -49,9 +52,6 @@ public class LocationManager: NSObject, CLLocationManagerDelegate {
         case .authorizedWhenInUse, .authorizedAlways:
             setupLocationManager()
             startUpdatingLocation()
-            if status == .authorizedWhenInUse {
-                locationManager.requestAlwaysAuthorization()
-            }
         case .restricted, .denied:
             stopUpdatingLocation()
         @unknown default:
@@ -60,9 +60,7 @@ public class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        let convertedLocations = locations.map {
-            Location(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
-        }
+        let convertedLocations = locations.map { Location(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude) }
         delegate?.didUpdateLocations(self, locations: convertedLocations)
     }
 
